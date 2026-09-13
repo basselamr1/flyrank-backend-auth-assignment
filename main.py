@@ -1,7 +1,8 @@
 import os 
 from dotenv import load_dotenv
 from supabase import create_client, Client
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Header
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 load_dotenv(override = True)
@@ -71,5 +72,25 @@ async def login(request: AuthRequest):
             detail={"error": "Invalid login credentials"}
         )
 
+@app.get('/public/info', status_code= status.HTTP_200_OK)
+async def get_public_info():
+    return {"message": "Welcome stranger! This info is public."}
     
+@app.get('/protected/profile')
+async def get_protected_profile(authorization: str | None = Header(default =  None)):
+    
+    if not authorization :
+        return JSONResponse(
+            status_code= 401,
+            content = {"error": "Access token required"}
+        )
+    parts = authorization.split()
 
+    if len(parts)!=2 or parts[0].lower()!="bearer" or not parts[1]:
+        return JSONResponse(
+            status_code= 401,
+            content = {"error": "Access token required"}
+        )
+    
+    token = parts[1]
+    return token
