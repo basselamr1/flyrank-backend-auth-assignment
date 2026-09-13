@@ -93,4 +93,23 @@ async def get_protected_profile(authorization: str | None = Header(default =  No
         )
     
     token = parts[1]
-    return token
+
+    try:
+        response = supabase.auth.get_user(token)
+        user = response.user
+        if user is None:
+            return JSONResponse(
+                status_code=401,
+                content={"error", "Invalid or expired token"}
+            )
+        return {
+            "id": user.id,
+            "email": user.email,
+            "created_at": user.created_at
+        }
+
+    except Exception:
+        return JSONResponse(
+            status_code=401,
+            content={"error": "Invalid or expired token"}
+        )
