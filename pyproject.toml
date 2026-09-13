@@ -1,0 +1,13 @@
+[project]
+name = "flyrank-backend-auth-assignment"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dotenv>=0.9.9",
+    "fastapi[dev,standard]>=0.141.1",
+    "python-dotenv>=1.2.3",
+    "supabase>=2.31.0",
+    "uvicorn>=0.52.4",
+]
