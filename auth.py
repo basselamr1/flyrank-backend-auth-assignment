@@ -1,31 +1,25 @@
 from supabase_client import supabase
-from fastapi import Header
+from fastapi import HTTPException, Header, Depends
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-async def get_current_user(authorization: str | None = Header(default=None)):
-    if not authorization :
-        return JSONResponse(
-            status_code= 401,
-            content = {"error": "Access token required"}
-        )
-    parts = authorization.split()
+security = HTTPBearer()
 
-    if len(parts)!=2 or parts[0].lower()!="bearer" or not parts[1]:
-        return JSONResponse(
-            status_code= 401,
-            content = {"error": "Access token required"}
-        )
-    
-    token = parts[1]
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    token = credentials.credentials
 
     try:
         response = supabase.auth.get_user(token)
+
         user = response.user
+
         if user is None:
-            return JSONResponse(
+            raise HTTPException(
                 status_code=401,
-                content={"error": "Invalid or expired token"}
+                detail="Invalid or expired token"
             )
+
         return user
 
     except Exception:

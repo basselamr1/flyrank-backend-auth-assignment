@@ -56,7 +56,7 @@ async def login(request: AuthRequest):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"error": "Invalid login credentials"}
+            detail={"error": str(e)}
         )
 
 @app.get('/public/info', status_code= status.HTTP_200_OK)
