@@ -1,20 +1,7 @@
-import os 
-from dotenv import load_dotenv
-from supabase import create_client, Client
-from fastapi import FastAPI, HTTPException, status, Header
-from fastapi.responses import JSONResponse
+from auth import get_current_user
+from supabase_client import supabase
+from fastapi import FastAPI, HTTPException, status, Depends
 from pydantic import BaseModel
-
-load_dotenv(override = True)
-
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-PORT = int(os.getenv("PORT"))
-
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise RuntimeError("SUPABASE_URL and SUPABASE_KEY must be set")
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI()
 
@@ -77,39 +64,9 @@ async def get_public_info():
     return {"message": "Welcome stranger! This info is public."}
     
 @app.get('/protected/profile')
-async def get_protected_profile(authorization: str | None = Header(default =  None)):
-    
-    if not authorization :
-        return JSONResponse(
-            status_code= 401,
-            content = {"error": "Access token required"}
-        )
-    parts = authorization.split()
+async def get_protected_profile(user = Depends(get_current_user)):
+    return user
 
-    if len(parts)!=2 or parts[0].lower()!="bearer" or not parts[1]:
-        return JSONResponse(
-            status_code= 401,
-            content = {"error": "Access token required"}
-        )
-    
-    token = parts[1]
-
-    try:
-        response = supabase.auth.get_user(token)
-        user = response.user
-        if user is None:
-            return JSONResponse(
-                status_code=401,
-                content={"error", "Invalid or expired token"}
-            )
-        return {
-            "id": user.id,
-            "email": user.email,
-            "created_at": user.created_at
-        }
-
-    except Exception:
-        return JSONResponse(
-            status_code=401,
-            content={"error": "Invalid or expired token"}
-        )
+@app.post('/auth/logout', status_code=status.HTTP_204_NO_CONTENT)
+async def logout():
+    supabase.auth.sign_out()
